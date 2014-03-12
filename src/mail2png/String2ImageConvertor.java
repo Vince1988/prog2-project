@@ -38,21 +38,20 @@ public class String2ImageConvertor {
     int addressHeight = fm.getMaxAscent() + fm.getMaxDescent();
     int addressBaseline = fm.getMaxAscent();
 
-    buffImg = new BufferedImage(addressWidth, addressHeight,
+    this.buffImg = new BufferedImage(addressWidth, addressHeight,
         BufferedImage.TYPE_INT_ARGB);
-    Graphics g = buffImg.createGraphics();
+    Graphics g = this.buffImg.createGraphics();
 
     g.setColor(FONT_COLOR);
     g.setFont(FONT);
     g.drawString(mailAddress, 0, addressBaseline);
 
-    return String2ImageConvertor.makeColorTransparent(buffImg, FONT_COLOR);
+    return String2ImageConvertor.makeColorTransparent(this.buffImg, FONT_COLOR);
   }
 
-  public void saveMailImage() {
+  public void saveMailImage(File file) {
     try {
-      ImageIO.write(this.getMailImage(), "PNG", new File(this.input.getText()
-          + ".png"));
+      ImageIO.write(this.getMailImage(), "PNG", file);
     } catch (IOException e) {
       // TODO Auto-generated catch block
       e.printStackTrace();
