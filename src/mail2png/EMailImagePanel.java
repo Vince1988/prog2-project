@@ -8,9 +8,12 @@ import java.awt.event.KeyEvent;
 import java.awt.event.KeyListener;
 import java.awt.image.BufferedImage;
 import java.io.File;
+import java.io.IOException;
 
+import javax.imageio.ImageIO;
 import javax.swing.JButton;
 import javax.swing.JFileChooser;
+import javax.swing.JOptionPane;
 import javax.swing.JPanel;
 import javax.swing.JTextField;
 
@@ -19,68 +22,79 @@ public class EMailImagePanel extends JPanel implements KeyListener,
 
   private static final long serialVersionUID = 1L;
 
-  private final static int WIDTH = 400;
-  private final static int HEIGTH = 200;
+  private final static int P_WIDTH = 400;
+  private final static int P_HEIGHT = 200;
+  private final static int P_MARGIN = 10;
 
-  private final static int MARGIN = 10;
-
-  private String2ImageConvertor imageConvertor;
-
-  private JFileChooser fileChooser;
-  private JTextField addressInput;
+  private EMailTextField addressInput;
   private JButton saveButton;
 
   public EMailImagePanel() {
     this.setLayout(null);
-    this.setPreferredSize(new Dimension(EMailImagePanel.WIDTH,
-        EMailImagePanel.HEIGTH));
+    this.setPreferredSize(new Dimension(P_WIDTH, P_HEIGHT));
+    this.setSize(this.getPreferredSize());
 
-    this.fileChooser = new JFileChooser();
-    this.addressInput = new JTextField();
-    this.saveButton = new JButton("Save PNG");
-    this.imageConvertor = new String2ImageConvertor(this.addressInput);
+    int inputHeight = (P_HEIGHT / 3) - (4 * P_MARGIN);
+    int inputWidth = P_WIDTH - (2 * P_MARGIN);
 
-    this.fileChooser.setFileSelectionMode(JFileChooser.FILES_ONLY);
-
-    this.addressInput.setBounds(MARGIN, MARGIN, WIDTH - MARGIN * 2, 20);
-    this.addressInput.setHorizontalAlignment(JTextField.CENTER);
+    // Add input for email address
+    this.addressInput = new EMailTextField();
     this.addressInput.addKeyListener(this);
-
-    this.saveButton.setBounds(MARGIN, HEIGTH - MARGIN - 20, WIDTH - MARGIN * 2,
-        20);
-    this.saveButton.addActionListener(this);
-
+    this.addressInput.setBounds(P_MARGIN, P_MARGIN, inputWidth, inputHeight);
+    this.addressInput.setHorizontalAlignment(JTextField.CENTER);
     this.add(this.addressInput);
+
+    // Add save button
+    this.saveButton = new JButton("Save PNG");
+    this.saveButton.addActionListener(this);
+    this.saveButton.setBounds(P_MARGIN, P_HEIGHT - P_MARGIN - inputHeight,
+        inputWidth, inputHeight);
     this.add(this.saveButton);
   }
 
   private void save() {
-    if (!this.addressInput.getText().isEmpty()) {
-      this.fileChooser.setSelectedFile(new File(this.addressInput.getText()
-          + ".png"));
-      int returnValue = this.fileChooser.showSaveDialog(this);
+    if (this.addressInput.isEmpty()) {
+      JOptionPane.showMessageDialog(this, "You need to input an email address",
+          "Address Missing", JOptionPane.ERROR_MESSAGE);
+    }
+    else {
+      JFileChooser fc = new EMailFileChooser();
+      fc.setSelectedFile(new File(this.addressInput.getText() + ".png"));
 
-      switch (returnValue) {
+      switch (fc.showSaveDialog(this)) {
       case JFileChooser.APPROVE_OPTION:
-        File file = this.fileChooser.getSelectedFile();
-        this.imageConvertor.saveMailImage(file);
+        File file = fc.getSelectedFile();
+        this.saveAs(file);
         break;
       default:
         break;
       }
-
     }
+  }
+
+  private void saveAs(File file) {
+    if (!file.getName().toLowerCase().endsWith(".png")) {
+      file = new File(file + ".png");
+    }
+
+    try {
+      ImageIO.write(this.addressInput.getImage(), "PNG", file);
+    } catch (IOException e) {
+      // TODO Auto-generated catch block
+      e.printStackTrace();
+    }
+
+    JOptionPane.showMessageDialog(this, "File saved as: " + file.getName(),
+        "File saved!", JOptionPane.INFORMATION_MESSAGE);
   }
 
   @Override
   protected void paintComponent(Graphics g) {
     super.paintComponent(g);
-    if (!this.addressInput.getText().isEmpty()) {
-      BufferedImage mailImage = this.imageConvertor.getMailImage();
+    BufferedImage mailImage = this.addressInput.getImage();
 
-      g.drawImage(mailImage, EMailImagePanel.WIDTH / 2 - mailImage.getWidth()
-          / 2, 80, null);
-    }
+    g.drawImage(mailImage, EMailImagePanel.P_WIDTH / 2 - mailImage.getWidth()
+        / 2, 80, null);
   }
 
   @Override
